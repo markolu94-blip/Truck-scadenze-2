@@ -68,15 +68,17 @@ button {
   padding: 9px 0;
 }
 .license-text {
-  font-size: 12px;
+  font-size: 11px;
   color: #475569;
   font-family: monospace;
   white-space: pre-wrap;
-  line-height: 1.5;
+  line-height: 1.4;
   background: #f8fafc;
   padding: 12px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+  max-height: 160px;
+  overflow-y: auto;
 }
 </style>
 </head>

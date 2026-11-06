@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Truck Scadenze</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2f6;
+  margin: 0;
+  padding: 18px;
+  color: #172b43;
+}
+header {
+  background: #142b45;
+  color: white;
+  padding: 22px;
+  text-align: center;
+  border-radius: 15px;
+}
+.card {
+  background: white;
+  padding: 18px;
+  margin-top: 18px;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px #0001;
+}
+h2 { margin-top: 0; }
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #1476d4;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+}
+.status {
+  font-weight: bold;
+  color: #1476d4;
+  line-height: 1.6;
+}
+.history {
+  border-bottom: 1px solid #ddd;
+  padding: 9px 0;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚛 TRUCK SCADENZE</h1>
+  <p>Il tuo assistente per il tachigrafo</p>
+</header>
+
+<div class="card">
+  <h2>💳 Carta conducente</h2>
+  <p id="cardStatus" class="status"></p>
+  <button onclick="register('card')">
+    HO SCARICATO LA CARTA
+  </button>
+</div>
+
+<div class="card">
+  <h2>🚛 Memoria camion</h2>
+  <p id="truckStatus" class="status"></p>
+  <button onclick="register('truck')">
+    HO SCARICATO LA MEMORIA
+  </button>
+</div>
+
+<div class="card">
+  <h2>🔔 Promemoria</h2>
+  <p>Un giorno prima e il giorno della scadenza.</p>
+  <button onclick="enableNotifications()">
+    ATTIVA NOTIFICHE
+  </button>
+</div>
+
+<div class="card">
+  <h2>📋 Storico scarichi</h2>
+  <div id="history"></div>
+</div>
+
+<script>
+const intervals = {
+  card: 28,
+  truck: 90
+};
+
+let records = JSON.parse(
+  localStorage.getItem("truckRecords") || "[]"
+);
+
+function save() {
+  localStorage.setItem(
+    "truckRecords",
+    JSON.stringify(records)
+  );
+}
+
+function register(type) {
+  if (!confirm("Confermi di aver scaricato i dati?")) return;
+
+  records.push({
+    type,
+    date: new Date().toISOString()
+  });
+
+  save();
+  render();
+}
+
+function lastRecord(type) {
+  return records.filter(r => r.type === type)
+    .sort((a,b) => new Date(b.date)-new Date(a.date))[0];
+}
+
+function renderStatus(type, element) {
+  const record = lastRecord(type);
+  const name = type === "card"
+    ? "Carta conducente"
+    : "Memoria camion";
+
+  if (!record) {
+    element.innerHTML = name +
+      "<br>Nessuno scarico registrato.";
+    return;
+  }
+
+  const last = new Date(record.date);
+  const due = new Date(last);
+  due.setDate(due.getDate() + intervals[type]);
+
+  const days = Math.ceil(
+    (due - new Date()) / 86400000
+  );
+
+  element.innerHTML =
+    name +
+    "<br>Ultimo scarico: " + last.toLocaleDateString("it-IT") +
+    "<br>Prossima scadenza: " + due.toLocaleDateString("it-IT") +
+    "<br>" + (days < 0
+      ? "⚠️ SCADENZA SUPERATA"
+      : "Giorni rimanenti: " + days);
+}
+
+function render() {
+  renderStatus("card", document.getElementById("cardStatus"));
+  renderStatus("truck", document.getElementById("truckStatus"));
+
+  const history = document.getElementById("history");
+  history.innerHTML = "";
+
+  records.slice().reverse().forEach(r => {
+    const div = document.createElement("div");
+    div.className = "history";
+    div.textContent =
+      (r.type === "card" ? "💳 Carta conducente" : "🚛 Memoria camion") +
+      " — " + new Date(r.date).toLocaleString("it-IT");
+    history.appendChild(div);
+  });
+
+  if (!records.length) {
+    history.textContent = "Nessuno scarico registrato.";
+  }
+}
+
+async function enableNotifications() {
+  if (!("Notification" in window)) {
+    alert("Il browser non supporta le notifiche.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    alert("Notifiche autorizzate. Ricorda: questa versione HTML non garantisce sveglie automatiche quando è chiusa.");
+  } else {
+    alert("Autorizza le notifiche nelle impostazioni del browser.");
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>

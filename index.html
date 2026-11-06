@@ -77,9 +77,9 @@ button {
 </header>
 
 <div class="card">
-  <h2>📅 Data di riferimento</h2>
-  <label for="referenceDate">Calcola i giorni partendo da:</label>
-  <input type="date" id="referenceDate" onchange="render()">
+  <h2>📅 Data dello scarico</h2>
+  <label for="referenceDate">Seleziona la data in cui hai fatto lo scarico:</label>
+  <input type="date" id="referenceDate">
 </div>
 
 <div class="card">
@@ -115,8 +115,18 @@ button {
 </div>
 
 <script>
-// Imposta di default la data odierna all'avvio
-document.getElementById('referenceDate').valueAsDate = new Date();
+function parseLocalDate(dateStr) {
+  if (!dateStr) return new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0);
+}
+
+// Imposta di default la data odierna nel selettore
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+const day = String(today.getDate()).padStart(2, '0');
+document.getElementById('referenceDate').value = `${year}-${month}-${day}`;
 
 const intervals = {
   card: 28,
@@ -136,10 +146,10 @@ function save() {
 
 function register(type) {
   const refInput = document.getElementById('referenceDate').value;
-  const dataDaRegistrare = refInput ? new Date(refInput) : new Date();
+  const dataDaRegistrare = parseLocalDate(refInput);
 
   const name = type === 'card' ? 'Carta conducente' : 'Memoria camion';
-  if (!confirm("Confermi di aver scaricato " + name + " per la data selezionata?")) return;
+  if (!confirm("Confermi di aver scaricato " + name + " in data " + dataDaRegistrare.toLocaleDateString("it-IT") + "?")) return;
 
   records.push({
     type,
@@ -152,7 +162,6 @@ function register(type) {
   creaEventoCalendario(type, dataDaRegistrare);
 }
 
-// Funzione per creare e scaricare il file promemoria (.ics) per l'agenda
 function creaEventoCalendario(type, dataUltimoScarico) {
   const giorniIntervallo = intervals[type];
   const dataScadenza = new Date(dataUltimoScarico);
@@ -160,10 +169,10 @@ function creaEventoCalendario(type, dataUltimoScarico) {
 
   const nomeEvento = type === 'card' ? 'Scadenza Scarico Carta Conducente' : 'Scadenza Scarico Memoria Camion';
   
-  const anno = dataScadenza.getFullYear();
-  const mese = String(dataScadenza.getMonth() + 1).padStart(2, '0');
-  const giorno = String(dataScadenza.getDate()).padStart(2, '0');
-  const dataFormattata = `${anno}${mese}${giorno}`;
+  const a = dataScadenza.getFullYear();
+  const m = String(dataScadenza.getMonth() + 1).padStart(2, '0');
+  const d = String(dataScadenza.getDate()).padStart(2, '0');
+  const dataFormattata = `${a}${m}${d}`;
 
   const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -208,26 +217,26 @@ function renderStatus(type, element) {
     return;
   }
 
-  // Normalizza le date azzerando le ore per evitare sfasamenti dovuti ai fusi orari
   const last = new Date(record.date);
-  last.setHours(0, 0, 0, 0);
-
   const due = new Date(last);
   due.setDate(due.getDate() + intervals[type]);
 
-  const refInput = document.getElementById('referenceDate').value;
-  const currentDate = refInput ? new Date(refInput) : new Date();
-  currentDate.setHours(0, 0, 0, 0);
+  // CONFRONTO SEMPRE CON LA DATA REALE ODIERNA DEL TELEFONO
+  const realToday = new Date();
 
-  const diffTime = due - currentDate;
-  const days = Math.round(diffTime / 86400000);
+  const dueMidnight = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const todayMidnight = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
+
+  const days = Math.round((dueMidnight - todayMidnight) / 86400000);
 
   element.innerHTML =
     name +
     "<br>Ultimo scarico: " + last.toLocaleDateString("it-IT") +
     "<br>Prossima scadenza: " + due.toLocaleDateString("it-IT") +
     "<br>" + (days < 0
-      ? "⚠️ SCADENZA SUPERATA"
+      ? `⚠️ SCADENZA SUPERATA da <strong>${Math.abs(days)}</strong> giorni`
+      : days === 0
+      ? "🚨 SCADE OGGI!"
       : "Giorni rimanenti: " + days);
 }
 

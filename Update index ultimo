@@ -67,23 +67,16 @@ button {
   border-bottom: 1px solid #ddd;
   padding: 9px 0;
 }
-footer {
-  margin-top: 30px;
-  margin-bottom: 20px;
-}
-.license-box {
-  background: #ffffff;
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 11px;
-  color: #334155;
+.license-text {
+  font-size: 12px;
+  color: #475569;
   font-family: monospace;
   white-space: pre-wrap;
   line-height: 1.5;
-  max-height: 150px;
-  overflow-y: auto;
-  box-shadow: 0 2px 5px #0000000a;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 </style>
 </head>
@@ -132,8 +125,9 @@ footer {
   </button>
 </div>
 
-<footer>
-  <div class="license-box">MIT License
+<div class="card">
+  <h2>📜 Licenza</h2>
+  <div class="license-text">MIT License
 
 Copyright (c) 2026 Markolu94
 
@@ -154,7 +148,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.</div>
-</footer>
+</div>
 
 <script>
 function parseLocalDate(dateStr) {
@@ -289,12 +283,12 @@ function render() {
   history.innerHTML = "";
 
   records.slice().reverse().forEach(r => {
-    const dy = document.createElement("div");
-    dy.className = "history";
-    dy.textContent =
+    const div = document.createElement("div");
+    div.className = "history";
+    div.textContent =
       (r.type === "card" ? "💳 Carta conducente" : "🚛 Memoria camion") +
       " — " + new Date(r.date).toLocaleDateString("it-IT");
-    history.appendChild(dy);
+    history.appendChild(div);
   });
 
   if (!records.length) {
@@ -304,7 +298,7 @@ function render() {
 
 async function enableNotifications() {
   if (!("Notification" in window)) {
-    alert("KIl browser non supporta le notifiche.");
+    alert("Il browser non supporta le notifiche.");
     return;
   }
 

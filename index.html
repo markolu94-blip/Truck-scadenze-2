@@ -1,134 +1,228 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestione Scadenze Truck</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f7f6;
-      margin: 0;
-      padding: 15px;
-      color: #333;
-    }
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
-    }
-    h2 {
-      margin-top: 0;
-      color: #1a73e8;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-      margin-bottom: 5px;
-    }
-    input[type="date"], input[type="text"], button {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-    button {
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .btn-notifiche {
-      background-color: #34a853;
-    }
-    .risultato {
-      background: #e8f0fe;
-      border-left: 4px solid #1a73e8;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 4px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Truck Scadenze</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2f6;
+  margin: 0;
+  padding: 18px;
+  color: #172b43;
+}
+header {
+  background: #142b45;
+  color: white;
+  padding: 22px;
+  text-align: center;
+  border-radius: 15px;
+}
+.card {
+  background: white;
+  padding: 18px;
+  margin-top: 18px;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px #0001;
+}
+h2 { margin-top: 0; }
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #1476d4;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.status {
+  font-weight: bold;
+  color: #1476d4;
+  line-height: 1.6;
+}
+.history {
+  border-bottom: 1px solid #ddd;
+  padding: 9px 0;
+}
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>🚚 Gestione Scadenze Truck</h2>
-    
-    <label for="dataInizio">Data di Riferimento (Calcola da):</label>
-    <input type="date" id="dataInizio">
+<header>
+  <h1>🚛 TRUCK SCADENZE</h1>
+  <p>Il tuo assistente per il tachigrafo</p>
+</header>
 
-    <label for="targa">Targa / Veicolo:</label>
-    <input type="text" id="targa" placeholder="Es. AB123CD">
+<!-- Selettore della data di riferimento personalizzata -->
+<div class="card">
+  <h2>📅 Data di Riferimento</h2>
+  <label for="dataInizio">Calcola partendo dal giorno:</label>
+  <input type="date" id="dataInizio">
+</div>
 
-    <label for="dataScadenza">Data Scadenza da verificare:</label>
-    <input type="date" id="dataScadenza">
+<div class="card">
+  <h2>💳 Carta conducente</h2>
+  <p id="cardStatus" class="status"></p>
+  <button onclick="register('card')">
+    HO SCARICATO LA CARTA
+  </button>
+</div>
 
-    <button onclick="calcolaScadenza()">Calcola Giorni</button>
-    <button class="btn-notifiche" onclick="richiediNotifiche()">🔔 Attiva Notifiche</button>
+<div class="card">
+  <h2>🚛 Memoria camion</h2>
+  <p id="truckStatus" class="status"></p>
+  <button onclick="register('truck')">
+    HO SCARICATO LA MEMORIA
+  </button>
+</div>
 
-    <div id="esito" class="risultato" style="display: none;"></div>
-  </div>
+<div class="card">
+  <h2>🔔 Promemoria</h2>
+  <p>Un giorno prima e il giorno della scadenza.</p>
+  <button onclick="enableNotifications()">
+    ATTIVA NOTIFICHE
+  </button>
+</div>
 
-  <script>
-    document.getElementById('dataInizio').valueAsDate = new Date();
+<div class="card">
+  <h2>📋 Storico scarichi</h2>
+  <div id="history"></div>
+</div>
 
-    function calcolaScadenza() {
-      const dataInizioInput = document.getElementById('dataInizio').value;
-      const dataScadenzaInput = document.getElementById('dataScadenza').value;
-      const targa = document.getElementById('targa').value || "Veicolo";
-      const esitoDiv = document.getElementById('esito');
+<script>
+// Imposta di default la data odierna nel selettore all'apertura
+document.getElementById('dataInizio').valueAsDate = new Date();
 
-      if (!dataScadenzaInput) {
-        alert("Inserisci una data di scadenza!");
-        return;
-      }
+const intervals = {
+  card: 28,
+  truck: 90
+};
 
-      const dataRiferimento = new Date(dataInizioInput);
-      const dataScadenza = new Date(dataScadenzaInput);
+let records = JSON.parse(
+  localStorage.getItem("truckRecords") || "[]"
+);
 
-      const diffTempo = dataScadenza - dataRiferimento;
-      const diffGiorni = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+function save() {
+  localStorage.setItem(
+    "truckRecords",
+    JSON.stringify(records)
+  );
+}
 
-      esitoDiv.style.display = "block";
+function register(type) {
+  const dataInput = document.getElementById('dataInizio').value;
+  let dataDaRegistrare = dataInput ? new Date(dataInput) : new Date();
 
-      if (diffGiorni < 0) {
-        esitoDiv.innerHTML = `<strong>⚠️ Scaduto:</strong> Il ${targa} è scaduto da <strong>${Math.abs(diffGiorni)}</strong> giorni.`;
-        esitoDiv.style.borderColor = "#d93025";
-      } else if (diffGiorni === 0) {
-        esitoDiv.innerHTML = `<strong>🚨 Oggi:</strong> La scadenza per il ${targa} è oggi!`;
-        esitoDiv.style.borderColor = "#f9ab00";
-      } else {
-        esitoDiv.innerHTML = `<strong>✅ Mancano:</strong> <strong>${diffGiorni}</strong> giorni alla scadenza per il ${targa}.`;
-        esitoDiv.style.borderColor = "#1a73e8";
-      }
-    }
+  if (!confirm("Confermi di aver scaricato i dati per la data selezionata?")) return;
 
-    function richiediNotifiche() {
-      if (!("Notification" in window)) {
-        alert("Notifiche non supportate da questo browser.");
-        return;
-      }
+  records.push({
+    type,
+    date: dataDaRegistrare.toISOString()
+  });
 
-      Notification.requestPermission().then(function (permission) {
-        if (permission === "granted") {
-          alert("Notifiche attivate con successo!");
-          new Notification("Truck Scadenze", {
-            body: "Le notifiche sono attive!",
-          });
-        } else {
-          alert("Permesso negato.");
-        }
-      });
-    }
-  </script>
+  save();
+  render();
+}
+
+function lastRecord(type) {
+  return records.filter(r => r.type === type)
+    .sort((a,b) => new Date(b.date)-new Date(a.date))[0];
+}
+
+function renderStatus(type, element) {
+  const record = lastRecord(type);
+  const name = type === "card"
+    ? "Carta conducente"
+    : "Memoria camion";
+
+  if (!record) {
+    element.innerHTML = name +
+      "<br>Nessuno scarico registrato.";
+    return;
+  }
+
+  const last = new Date(record.date);
+  const due = new Date(last);
+  due.setDate(due.getDate() + intervals[type]);
+
+  // Calcola i giorni rimanenti rispetto alla data di riferimento scelta dall'utente
+  const dataRiferimentoInput = document.getElementById('dataInizio').value;
+  const dataRiferimentoCorrente = dataRiferimentoInput ? new Date(dataRiferimentoInput) : new Date();
+
+  const days = Math.ceil(
+    (due - dataRiferimentoCorrente) / 86400000
+  );
+
+  element.innerHTML =
+    name +
+    "<br>Ultimo scarico: " + last.toLocaleDateString("it-IT") +
+    "<br>Prossima scadenza: " + due.toLocaleDateString("it-IT") +
+    "<br>" + (days < 0
+      ? "⚠️ SCADENZA SUPERATA"
+      : "Giorni rimanenti: " + days);
+}
+
+function render() {
+  renderStatus("card", document.getElementById("cardStatus"));
+  renderStatus("truck", document.getElementById("truckStatus"));
+
+  const history = document.getElementById("history");
+  history.innerHTML = "";
+
+  records.slice().reverse().forEach(r => {
+    const div = document.createElement("div");
+    div.className = "history";
+    div.textContent =
+      (r.type === "card" ? "💳 Carta conducente" : "🚛 Memoria camion") +
+      " — " + new Date(r.date).toLocaleDateString("it-IT");
+    history.appendChild(div);
+  });
+
+  if (!records.length) {
+    history.textContent = "Nessuno scarico registrato.";
+  }
+}
+
+// Aggiorna i calcoli a schermo se l'utente cambia la data nel selettore
+document.getElementById('dataInizio').addEventListener('change', render);
+
+async function enableNotifications() {
+  if (!("Notification" in window)) {
+    alert("Il browser non supporta le notifiche.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    alert("Notifiche autorizzate. Ricorda: questa versione HTML non garantisce sveglie automatiche quando è chiusa.");
+  } else {
+    alert("Autorizza le notifiche nelle impostazioni del browser.");
+  }
+}
+
+render();
+</script>
 
 </body>
 </html>

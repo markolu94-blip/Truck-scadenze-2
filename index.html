@@ -55,6 +55,9 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
+.btn-reset {
+  background: #d93025;
+}
 .status {
   font-weight: bold;
   color: #1476d4;
@@ -106,10 +109,13 @@ button {
 <div class="card">
   <h2>📋 Storico scarichi</h2>
   <div id="history"></div>
+  <button class="btn-reset" onclick="resetHistory()">
+    🗑️ RESETTA STORICO
+  </button>
 </div>
 
 <script>
-// Imposta di default la data odierna nel selettore all'avvio
+// Imposta di default la data odierna all'avvio
 document.getElementById('referenceDate').valueAsDate = new Date();
 
 const intervals = {
@@ -140,6 +146,14 @@ function register(type) {
   render();
 }
 
+// Funzione per azzerare lo storico salvato
+function resetHistory() {
+  if (!confirm("Sei sicuro di voler cancellare tutto lo storico e i dati salvati?")) return;
+  records = [];
+  localStorage.removeItem("truckRecords");
+  render();
+}
+
 function lastRecord(type) {
   return records.filter(r => r.type === type)
     .sort((a,b) => new Date(b.date)-new Date(a.date))[0];
@@ -161,7 +175,6 @@ function renderStatus(type, element) {
   const due = new Date(last);
   due.setDate(due.getDate() + intervals[type]);
 
-  // Prende la data scelta dall'utente nel box in alto (invece di prendere sempre e solo "oggi")
   const refInput = document.getElementById('referenceDate').value;
   const currentDate = refInput ? new Date(refInput) : new Date();
 

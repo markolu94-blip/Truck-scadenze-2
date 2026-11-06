@@ -120,7 +120,7 @@ document.getElementById('referenceDate').valueAsDate = new Date();
 
 const intervals = {
   card: 28,
-  truck: 90
+  truck: 90 // 90 giorni esatti per la memoria camion
 };
 
 let records = JSON.parse(
@@ -135,11 +135,15 @@ function save() {
 }
 
 function register(type) {
-  if (!confirm("Confermi di aver scaricato i dati?")) return;
+  // Prende la data selezionata nel box in alto per registrarla nello storico
+  const refInput = document.getElementById('referenceDate').value;
+  const dataDaRegistrare = refInput ? new Date(refInput) : new Date();
+
+  if (!confirm("Confermi di aver scaricato i dati per la data selezionata?")) return;
 
   records.push({
     type,
-    date: new Date().toISOString()
+    date: dataDaRegistrare.toISOString()
   });
 
   save();
@@ -203,7 +207,7 @@ function render() {
     div.className = "history";
     div.textContent =
       (r.type === "card" ? "💳 Carta conducente" : "🚛 Memoria camion") +
-      " — " + new Date(r.date).toLocaleString("it-IT");
+      " — " + new Date(r.date).toLocaleDateString("it-IT");
     history.appendChild(div);
   });
 

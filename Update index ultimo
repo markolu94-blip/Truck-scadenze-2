@@ -69,18 +69,20 @@ button {
 }
 footer {
   margin-top: 30px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 .license-box {
   background: #ffffff;
   padding: 15px;
   border-radius: 12px;
   border: 1px solid #cbd5e1;
-  font-size: 10px;
-  color: #475569;
+  font-size: 11px;
+  color: #334155;
   font-family: monospace;
   white-space: pre-wrap;
-  line-height: 1.4;
+  line-height: 1.5;
+  max-height: 150px;
+  overflow-y: auto;
   box-shadow: 0 2px 5px #0000000a;
 }
 </style>
@@ -287,12 +289,12 @@ function render() {
   history.innerHTML = "";
 
   records.slice().reverse().forEach(r => {
-    const div = document.createElement("div");
-    div.className = "history";
-    div.textContent =
+    const dy = document.createElement("div");
+    dy.className = "history";
+    dy.textContent =
       (r.type === "card" ? "💳 Carta conducente" : "🚛 Memoria camion") +
       " — " + new Date(r.date).toLocaleDateString("it-IT");
-    history.appendChild(div);
+    history.appendChild(dy);
   });
 
   if (!records.length) {
@@ -302,7 +304,7 @@ function render() {
 
 async function enableNotifications() {
   if (!("Notification" in window)) {
-    alert("Il browser non supporta le notifiche.");
+    alert("KIl browser non supporta le notifiche.");
     return;
   }
 

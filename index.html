@@ -149,7 +149,6 @@ function register(type) {
   save();
   render();
 
-  // Genera e scarica automaticamente il file per il calendario
   creaEventoCalendario(type, dataDaRegistrare);
 }
 
@@ -161,7 +160,6 @@ function creaEventoCalendario(type, dataUltimoScarico) {
 
   const nomeEvento = type === 'card' ? 'Scadenza Scarico Carta Conducente' : 'Scadenza Scarico Memoria Camion';
   
-  // Formatta la data nel formato richiesto dai calendari (YYYYMMDD)
   const anno = dataScadenza.getFullYear();
   const mese = String(dataScadenza.getMonth() + 1).padStart(2, '0');
   const giorno = String(dataScadenza.getDate()).padStart(2, '0');
@@ -184,8 +182,6 @@ END:VCALENDAR`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
-  alert("Scarico registrato! È stato scaricato anche il file promemoria (.ics): toccalo per aggiungerlo subito all'agenda del telefono.");
 }
 
 function resetHistory() {
@@ -212,16 +208,19 @@ function renderStatus(type, element) {
     return;
   }
 
+  // Normalizza le date azzerando le ore per evitare sfasamenti dovuti ai fusi orari
   const last = new Date(record.date);
+  last.setHours(0, 0, 0, 0);
+
   const due = new Date(last);
   due.setDate(due.getDate() + intervals[type]);
 
   const refInput = document.getElementById('referenceDate').value;
   const currentDate = refInput ? new Date(refInput) : new Date();
+  currentDate.setHours(0, 0, 0, 0);
 
-  const days = Math.ceil(
-    (due - currentDate) / 86400000
-  );
+  const diffTime = due - currentDate;
+  const days = Math.round(diffTime / 86400000);
 
   element.innerHTML =
     name +

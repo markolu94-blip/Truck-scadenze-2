@@ -34,5 +34,101 @@
       padding: 10px;
       margin-bottom: 10px;
       border: 1px solid #ccc;
-      border-radius:
-        
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-notifiche {
+      background-color: #34a853;
+    }
+    .risultato {
+      background: #e8f0fe;
+      border-left: 4px solid #1a73e8;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>🚚 Gestione Scadenze Truck</h2>
+    
+    <label for="dataInizio">Data di Riferimento (Calcola da):</label>
+    <input type="date" id="dataInizio">
+
+    <label for="targa">Targa / Veicolo:</label>
+    <input type="text" id="targa" placeholder="Es. AB123CD">
+
+    <label for="dataScadenza">Data Scadenza da verificare:</label>
+    <input type="date" id="dataScadenza">
+
+    <button onclick="calcolaScadenza()">Calcola Giorni</button>
+    <button class="btn-notifiche" onclick="richiediNotifiche()">🔔 Attiva Notifiche</button>
+
+    <div id="esito" class="risultato" style="display: none;"></div>
+  </div>
+
+  <script>
+    document.getElementById('dataInizio').valueAsDate = new Date();
+
+    function calcolaScadenza() {
+      const dataInizioInput = document.getElementById('dataInizio').value;
+      const dataScadenzaInput = document.getElementById('dataScadenza').value;
+      const targa = document.getElementById('targa').value || "Veicolo";
+      const esitoDiv = document.getElementById('esito');
+
+      if (!dataScadenzaInput) {
+        alert("Inserisci una data di scadenza!");
+        return;
+      }
+
+      const dataRiferimento = new Date(dataInizioInput);
+      const dataScadenza = new Date(dataScadenzaInput);
+
+      const diffTempo = dataScadenza - dataRiferimento;
+      const diffGiorni = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+
+      esitoDiv.style.display = "block";
+
+      if (diffGiorni < 0) {
+        esitoDiv.innerHTML = `<strong>⚠️ Scaduto:</strong> Il ${targa} è scaduto da <strong>${Math.abs(diffGiorni)}</strong> giorni.`;
+        esitoDiv.style.borderColor = "#d93025";
+      } else if (diffGiorni === 0) {
+        esitoDiv.innerHTML = `<strong>🚨 Oggi:</strong> La scadenza per il ${targa} è oggi!`;
+        esitoDiv.style.borderColor = "#f9ab00";
+      } else {
+        esitoDiv.innerHTML = `<strong>✅ Mancano:</strong> <strong>${diffGiorni}</strong> giorni alla scadenza per il ${targa}.`;
+        esitoDiv.style.borderColor = "#1a73e8";
+      }
+    }
+
+    function richiediNotifiche() {
+      if (!("Notification" in window)) {
+        alert("Notifiche non supportate da questo browser.");
+        return;
+      }
+
+      Notification.requestPermission().then(function (permission) {
+        if (permission === "granted") {
+          alert("Notifiche attivate con successo!");
+          new Notification("Truck Scadenze", {
+            body: "Le notifiche sono attive!",
+          });
+        } else {
+          alert("Permesso negato.");
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
